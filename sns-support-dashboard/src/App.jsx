@@ -199,25 +199,26 @@ export default function App() {
   const isDefault = Object.entries(COST_DEFAULTS).every(([k, v]) => costInputs[k] === String(v)) && marginPct === MARGIN.default;
   const avgMonthlySales = R.sales.total == null ? null : R.sales.total / keys.length;
 
-  /* Status is about the proposed replacement model. Nothing is marked
-     Verified Covered without evidence, and none exists yet. */
+  /* Status is about the proposed replacement model. A planned owner (Rose)
+     moves a duty to Needs Verification; nothing is Verified Covered until
+     cutover proves it. */
   const duties = [
     {
       name: "Email responses",
       evidence: `${int(R.emails.total)} emails logged Jul–Sep. Unique tickets and handling time not measured.`,
-      plan: "Help Scout automation, then VA",
+      plan: "Rose in Help Scout, with automation; ticket audit due Nov 5",
       status: "Needs Verification",
     },
     {
       name: "Phone & callback handling",
       evidence: `${int(R.inboundCalls.total)} inbound and ${int(R.outboundCalls.total)} outbound calls (incl. voicemails, callbacks).`,
-      plan: "No phone owner named yet",
-      status: "Unassigned",
+      plan: "Rose; keep the number, voicemail-to-ticket with tested callbacks",
+      status: "Needs Verification",
     },
     {
       name: "Refund administration",
       evidence: `${money(R.refunds.total)} in SNS refunds processed Jul–Sep.`,
-      plan: "VA within approval limits; limits and platform access not defined",
+      plan: "Rose, trained on BuyGoods Nov 6–20; refund limits not yet defined",
       status: "Needs Verification",
     },
     {
@@ -229,7 +230,7 @@ export default function App() {
     {
       name: "Fulfillment escalation",
       evidence: "Listed as a CS task (Fulfillment, On Hold, Returns, Shipping Issues/Delays) with no counts recorded.",
-      plan: "VA with fulfillment SOP; current volume unknown",
+      plan: "Rose, trained on shipping and returns; volume unknown",
       status: "Needs Verification",
     },
     {
@@ -264,10 +265,11 @@ export default function App() {
         <div className="min-w-0">
           <Eyebrow className="text-save">Decision Requested</Eyebrow>
           <p className="mt-2 max-w-3xl text-base leading-relaxed text-ink sm:text-lg">
-            Approve evaluation of transitioning SNS customer support from HelpGrid to Help Scout automation and part-time VA
-            coverage, with human escalation for refunds, chargebacks, fulfillment, and product safety issues.
+            Approve evaluation of transitioning SNS customer support from HelpGrid to Help Scout automation and part-time offshore VA
+            coverage (Rose), with human escalation for refunds, chargebacks, fulfillment, and product safety issues.
           </p>
           <p className="mt-2 text-xs text-caution">Final cancellation subject to workload verification, operational handoff, and contract review.</p>
+          <p className="mt-1 text-xs text-muted">Target handoff to Rose: December 1, 2026, subject to readiness and valid HelpGrid notice.</p>
         </div>
         <div className="border-t border-navy-line pt-4 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0 lg:text-right">
           <p className="text-[11px] uppercase tracking-wider text-muted">Estimated annual savings</p>
@@ -454,7 +456,7 @@ export default function App() {
           <ol className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-stretch">
             {[
               ["bot", "Help Scout", "Automated answers, order status, routing"],
-              ["person", "Part-time VA", "Callbacks, refunds, everyday exceptions"],
+              ["person", "Rose (offshore VA)", "Callbacks, refunds, everyday exceptions"],
               ["shield", "Escalations", "Chargebacks, safety issues, large refunds"],
             ].map(([icon, title, desc], i, a) => (
               <li key={title} className="flex flex-1 items-center gap-2">
@@ -480,9 +482,9 @@ export default function App() {
 
           <div className="mt-5 rounded-xl border border-caution/30 bg-caution-bg/40 p-4 text-sm leading-relaxed text-ink-soft">
             <span className="font-semibold text-ink">Final recommendation:</span> approve an investigation and controlled
-            transition from HelpGrid to Help Scout automation, a part-time VA and escalation coverage. Proceed only after
-            verifying unique tickets, handling time, resolution outcomes, HelpGrid's obligations and its termination conditions.
-            Kim (CS Manager) leads the workload check.
+            transition from HelpGrid to Help Scout automation, Rose as part-time offshore VA, and escalation coverage, targeting
+            December 1. Proceed only after verifying unique tickets, handling time, resolution outcomes, HelpGrid's obligations
+            and its termination conditions. Rose's November 5 ticket audit supplies the workload data; Kim (CS Manager) reviews it.
           </div>
           <p className="mt-auto pt-4 text-[11px] leading-relaxed text-muted-dim">
             *Savings come from the editable monthly budget. They are estimates, not vendor quotes, and exclude transition costs.
@@ -516,19 +518,17 @@ export default function App() {
             <div className="flex flex-col rounded-xl border border-navy-line bg-navy p-4">
               <Eyebrow>Proposed (low – high)</Eyebrow>
               <div className="mt-3 grid gap-3">
-                <p className="flex items-baseline justify-between text-xs text-muted">
-                  Help Scout (retained) <span className="tnum text-sm text-ink">{usd(costs.helpScoutMonthly)}</span>
-                </p>
+                <MoneyInput id="hsp" label="Help Scout after cutover (2 seats)" value={costInputs.helpScoutProposed} onChange={setCost("helpScoutProposed")} hint="Per 90-Day plan; verify plan and add-ons" />
                 <div className="grid grid-cols-2 gap-2">
                   <MoneyInput id="al" label="Automation low" value={costInputs.automationLow} onChange={setCost("automationLow")} suffix="" />
                   <MoneyInput id="ah" label="Automation high" value={costInputs.automationHigh} onChange={setCost("automationHigh")} suffix="" />
-                  <MoneyInput id="vhl" label="VA hrs/mo low" value={costInputs.vaHoursLow} onChange={setCost("vaHoursLow")} prefix="" suffix="hrs" />
-                  <MoneyInput id="vhh" label="VA hrs/mo high" value={costInputs.vaHoursHigh} onChange={setCost("vaHoursHigh")} prefix="" suffix="hrs" />
+                  <MoneyInput id="vhl" label="Rose hrs/mo low" value={costInputs.vaHoursLow} onChange={setCost("vaHoursLow")} prefix="" suffix="hrs" />
+                  <MoneyInput id="vhh" label="Rose hrs/mo high" value={costInputs.vaHoursHigh} onChange={setCost("vaHoursHigh")} prefix="" suffix="hrs" />
                 </div>
                 <div className="grid grid-cols-2 items-end gap-2">
-                  <MoneyInput id="vr" label="VA rate (offshore)" value={costInputs.vaRate} onChange={setCost("vaRate")} suffix="/hr" />
+                  <MoneyInput id="vr" label="Offshore rate" value={costInputs.vaRate} onChange={setCost("vaRate")} suffix="/hr" />
                   <p className="pb-2 text-right text-xs text-muted">
-                    VA cost/mo <span className="tnum block whitespace-nowrap text-sm text-ink">{sav ? `${usd(sav.vaLow)}–${usd(sav.vaHigh)}` : NA}</span>
+                    Rose cost/mo <span className="tnum block whitespace-nowrap text-sm text-ink">{sav ? `${usd(sav.vaLow)}–${usd(sav.vaHigh)}` : NA}</span>
                   </p>
                 </div>
               </div>
@@ -548,7 +548,7 @@ export default function App() {
             </div>
           </div>
           <p className="mt-3 text-[11px] leading-relaxed text-muted-dim">
-            Savings = (HelpGrid + Help Scout) − (Help Scout + automation + VA hours × rate). The low case uses the high proposed cost.
+            Savings = (HelpGrid + current Help Scout) − (Help Scout after cutover + automation + Rose hours × rate). The low case uses the high proposed cost.
           </p>
           <p className="mt-2 rounded-lg border border-caution/30 bg-caution-bg/40 px-3 py-2 text-[11px] leading-relaxed text-caution">
             VA cost assumes that automation resolves a substantial portion of routine inquiries. Actual staffing costs must be
@@ -570,7 +570,7 @@ export default function App() {
           <li>Calls and emails: CS Volume tab, “{CS_VOLUME.inbound.title}”, “{CS_VOLUME.outbound.title}” and “{CS_VOLUME.email.title}”, weekly Total column. Each week counts in the month of its Monday start date, matching SNS's weekly reporting: July = weeks of Jul 6–27 (Jul 6–31), August = weeks of Aug 3–31 (Aug 3–Sep 4), September = weeks of Sep 7–28 (Sep 7–Oct 2). Activity months therefore differ slightly from the calendar months used for sales and refunds. Weekends are not recorded.</li>
           <li>Chargebacks: ChargebackAlerts 2026 tab, rows 27–32. Month comes from column B “Chargeback/Alert Date”; column C “Type” separates alerts from actual chargebacks. No deadline or outcome field exists.</li>
           <li>Modeled contribution = attributed sales × assumed margin ({MARGIN.min}–{MARGIN.max}%, default {MARGIN.default}%). Break-even = HelpGrid fee ÷ margin. Three-month unit costs divide total fees by total interactions or total inbound calls, not an average of monthly ratios.</li>
-          <li>HelpGrid {usd(COST_DEFAULTS.helpGridMonthly)}/mo and Help Scout {usd(COST_DEFAULTS.helpScoutMonthly)}/mo are management inputs, not in the workbook. Automation ({usd(COST_DEFAULTS.automationLow)}–{usd(COST_DEFAULTS.automationHigh)}) and VA ({COST_DEFAULTS.vaHoursLow}–{COST_DEFAULTS.vaHoursHigh} hrs/mo at an offshore rate of {usd(COST_DEFAULTS.vaRate)}/hr) are illustrative planning assumptions, not quotes or a verified staffing requirement.</li>
+          <li>HelpGrid {usd(COST_DEFAULTS.helpGridMonthly)}/mo and current Help Scout {usd(COST_DEFAULTS.helpScoutMonthly)}/mo are management inputs, not in the workbook. Help Scout after cutover ({usd(COST_DEFAULTS.helpScoutProposed)}/mo, 2 seats) and the Dec 1 handoff to Rose come from the SNS 90-Day Restructuring plan in this repo. Automation ({usd(COST_DEFAULTS.automationLow)}–{usd(COST_DEFAULTS.automationHigh)}) and Rose as offshore VA ({COST_DEFAULTS.vaHoursLow}–{COST_DEFAULTS.vaHoursHigh} hrs/mo at an offshore rate of {usd(COST_DEFAULTS.vaRate)}/hr) are illustrative planning assumptions, not quotes or a verified staffing requirement.</li>
           <li>Not verified: unique tickets, handling time, resolution outcomes, actual COGS and variable costs, incremental sales, HelpGrid's obligations and termination conditions, transition costs.</li>
         </ul>
       </details>

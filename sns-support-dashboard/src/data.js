@@ -144,13 +144,16 @@ export const CHARGEBACK_LOG = [
 export const COST_DEFAULTS = {
   helpGridMonthly: 1496, // current HelpGrid fee, per management; invoice not verified
   helpScoutMonthly: 162, // existing Help Scout subscription, per management
+  // After cutover: 2 paid seats (Cody and Rose), per the SNS 90-Day
+  // Restructuring plan (repo root index.html). Plan and add-ons not verified.
+  helpScoutProposed: 90,
   automationLow: 50, // estimate, not a quote
   automationHigh: 150,
-  // Part-time VA: illustrative planning assumption, not a verified staffing
+  // Part-time offshore VA (Rose): illustrative planning assumption, not a verified staffing
   // requirement. 20–40 hrs × $10/hr = $200–$400/mo.
   vaHoursLow: 20,
   vaHoursHigh: 40,
-  vaRate: 10, // offshore VA rate (SNS confirmed offshore staffing)
+  vaRate: 10, // offshore VA rate; Rose is the offshore VA (confirmed by SNS)
 };
 
 /* ---- Illustrative contribution margin (NOT a verified SNS margin) ----

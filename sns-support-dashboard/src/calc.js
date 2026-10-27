@@ -103,8 +103,8 @@ export function savings(c) {
   const current = c.helpGridMonthly + c.helpScoutMonthly;
   const vaLow = c.vaHoursLow * c.vaRate;
   const vaHigh = c.vaHoursHigh * c.vaRate;
-  const proposedLow = c.helpScoutMonthly + c.automationLow + vaLow;
-  const proposedHigh = c.helpScoutMonthly + c.automationHigh + vaHigh;
+  const proposedLow = c.helpScoutProposed + c.automationLow + vaLow;
+  const proposedHigh = c.helpScoutProposed + c.automationHigh + vaHigh;
   return {
     current,
     vaLow,
