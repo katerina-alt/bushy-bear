@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: dark; background: #0A1324; }
+body { background: #0A1324; color: #F4F6FA; -webkit-font-smoothing: antialiased; }
+.tnum { font-variant-numeric: tabular-nums; }
+details > summary { list-style: none; cursor: pointer; }
+details > summary::-webkit-details-marker { display: none; }
+details[open] .chev { transform: rotate(90deg); }
+input[type="range"] { accent-color: #5B9BE6; }
+:focus-visible { outline: 2px solid #5B9BE6; outline-offset: 2px; border-radius: 4px; }
+@media print { body { background: #fff; } }

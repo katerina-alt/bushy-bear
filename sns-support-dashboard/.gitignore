@@ -1,0 +1,4 @@
+node_modules/
+build/
+# Commit the built single-file dashboard (overrides the repo-root dist/ ignore for this folder only)
+!dist/
