@@ -111,8 +111,23 @@ nav.tabs::-webkit-scrollbar{display:none}
 .empty{padding:18px 16px;font-size:13px;color:var(--muted)}
 
 /* flags */
-.flags{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px}
+.flags{display:flex;flex-direction:column;gap:10px;max-width:860px}
 .flag{background:var(--panel);border:1px solid var(--hair);border-left:4px solid var(--crit);border-radius:var(--r);box-shadow:var(--shadow-sm);padding:13px 15px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.flag.off{opacity:.6;border-left-color:var(--good)}
+.flag-actions{display:flex;gap:14px;align-items:center}
+.textbtn{font-size:11.5px;font-weight:700;color:var(--muted);background:none;border:0;padding:2px 0;cursor:pointer}
+.textbtn:hover{color:var(--accent)}
+/* inline editor */
+.editor{grid-column:1/-1;border-top:1px dashed var(--hair);padding-top:12px;margin-top:2px;display:flex;flex-direction:column;gap:10px}
+.ed-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:10px}
+.ed-field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ed-field.wide{grid-column:1/-1}
+.ed-field label{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.ed-field input,.ed-field select,.ed-field textarea{font-family:var(--sans);font-size:13px;color:var(--text);background:var(--ground);border:1px solid var(--hair);border-radius:8px;padding:7px 9px;width:100%}
+.ed-field textarea{resize:vertical;min-height:54px;line-height:1.45}
+.ed-field :focus{outline:none;border-color:var(--accent-2)}
+.ed-foot{display:flex;gap:8px;justify-content:flex-end}
+.icobtn.edit:hover{color:var(--accent);border-color:var(--accent)}
 .flag.mid{border-left-color:var(--warn)}
 .flag b{font-size:14px;line-height:1.3}
 .flag p{margin:0;font-size:12.8px;color:var(--text-2)}
@@ -157,7 +172,7 @@ select.ctl:focus,input.ctl:focus{outline:none;border-color:var(--accent-2)}
 .btn{font-size:12.5px;font-weight:700;color:var(--on-accent);background:var(--accent);border:1px solid var(--accent);border-radius:100px;padding:8px 15px;cursor:pointer}
 .btn:hover{filter:brightness(1.08)}
 .btn.ghost{background:var(--panel);color:var(--text-2);border-color:var(--hair)}
-.ro .addbar,.ro .icobtn{display:none}
+.ro .addbar,.ro .icobtn,.ro .textbtn,.ro .editor{display:none}
 .ro .check,.ro .status-sel,.ro .time{pointer-events:none}
 
 footer{position:relative;overflow:hidden;max-width:1180px;margin:20px auto 0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px 76px;border-top:1px solid var(--hair)}
@@ -302,12 +317,16 @@ const GROUPS = [
 const STATUSES = ["Planned","Assigned","In progress","Awaiting review","Blocked","Completed and verified"];
 const STATUS_COLOR = {"Planned":"var(--muted)","Assigned":"var(--a-cs)","In progress":"var(--accent-2)","Awaiting review":"var(--warn)","Blocked":"var(--crit)","Completed and verified":"var(--good)"};
 const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
-const TRASH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>';
+const PENCIL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/></svg>';
+const TRASH ='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>';
 
 let items = [];       // all docs: {id, ...data}
 let col = null;       // collection ref
 let canWrite = true;
 let loaded = false;
+let editing = null;   // id of the item whose editor is open
+let draft = {};       // unsaved editor values, survives live re-renders
+let showOffFlags = false;
 const ui = {view:"actions", area:"all", status:"all", owner:"all", hide:false};
 try { const s = JSON.parse(localStorage.getItem("sns-cmd-ui") || "{}"); Object.assign(ui, {area:s.area||"all", status:s.status||"all", owner:s.owner||"all", hide:!!s.hide}); } catch(e){}
 const saveUi = () => { try { localStorage.setItem("sns-cmd-ui", JSON.stringify({area:ui.area,status:ui.status,owner:ui.owner,hide:ui.hide})); } catch(e){} };
@@ -355,6 +374,42 @@ function stats(){
   $("n-projects").textContent = projs.filter(p => !isDone(p)).length;
 }
 
+/* ---------- inline editor ---------- */
+const FIELDS = {
+  action:  [["title","Title","text",1],["detail","Details","textarea",1],["group","When","group"],["area","Area","area"],["owner","Owner","text"],["priority","Priority","text"]],
+  cal:     [["title","Title","text",1],["detail","Notes","textarea",1],["date","Date","date"],["dur","Minutes","number"]],
+  cody:    [["title","Idea","text",1],["detail","Notes","textarea",1]],
+  flag:    [["title","Blind spot","text",1],["detail","What's wrong","textarea",1],["fix","Fix","textarea",1],["level","Severity","level"]],
+  project: [["title","Project","text",1],["next","Next step","textarea",1],["owner","Owner","text"],["area","Area","area"],["sub","Sub-area","text"],["dueLabel","Deadline as shown","text"],["due","Deadline date (drives overdue)","date"],["blocker","Waiting on","text",1]]
+};
+const CHOICES = {
+  group: GROUPS.map(g => [g.id, g.label]),
+  area: [["","None"], ...AREA_ORDER.map(k => [k, AREAS[k].short])],
+  level: [["high","High"],["mid","Medium"]]
+};
+function editBtn(it){ return `<button class="icobtn edit" data-act="edit" aria-label="Edit ${esc(it.title)}" aria-expanded="${editing === it.id}">${PENCIL}</button>`; }
+function editorHTML(it){
+  if (editing !== it.id) return "";
+  const fields = FIELDS[it.kind] || [];
+  return `<form class="editor" data-editor="${esc(it.id)}"><div class="ed-grid">${fields.map(([k,label,type,wide]) => {
+    const v = draft[k] ?? "";
+    const id = `ed-${k}`;
+    let input;
+    if (type === "textarea") input = `<textarea id="${id}" data-f="${k}" rows="2">${esc(v)}</textarea>`;
+    else if (CHOICES[type]) input = `<select id="${id}" data-f="${k}">${CHOICES[type].map(([cv,cl]) => `<option value="${esc(cv)}"${String(cv) === String(v) ? " selected" : ""}>${esc(cl)}</option>`).join("")}</select>`;
+    else input = `<input id="${id}" data-f="${k}" type="${type}" value="${esc(v)}"${type === "number" ? ' min="5" step="5"' : ""}>`;
+    return `<div class="ed-field${wide ? " wide" : ""}"><label for="${id}">${label}</label>${input}</div>`;
+  }).join("")}</div>
+  <div class="ed-foot"><button type="button" class="btn ghost" data-act="cancel">Cancel</button><button type="submit" class="btn">Save</button></div></form>`;
+}
+function openEditor(it){
+  editing = it.id; draft = {};
+  (FIELDS[it.kind] || []).forEach(([k]) => { draft[k] = it[k] ?? (k === "level" ? "high" : ""); });
+  render();
+  const first = document.querySelector(`[data-editor="${CSS.escape(it.id)}"] [data-f]`);
+  if (first) first.focus();
+}
+
 function rowHTML(it, opts){
   const area = AREAS[it.area];
   const bc = opts.color || (area ? area.color : "var(--accent)");
@@ -362,18 +417,32 @@ function rowHTML(it, opts){
     <button class="check" data-act="toggle" aria-label="${it.done ? "Mark not done" : "Mark done"}: ${esc(it.title)}" aria-pressed="${!!it.done}">${CHECK}</button>
     <div style="min-width:0"><div class="r-title">${esc(it.title)}</div>${it.detail ? `<div class="r-detail">${esc(it.detail)}</div>` : ""}
       <div class="r-meta">${opts.meta || ""}</div></div>
-    <div class="r-side">${opts.side || ""}<button class="icobtn" data-act="del" aria-label="Delete ${esc(it.title)}">${TRASH}</button></div>
+    <div class="r-side">${opts.side || ""}${editBtn(it)}<button class="icobtn" data-act="del" aria-label="Delete ${esc(it.title)}">${TRASH}</button></div>
+    ${editorHTML(it)}
   </div>`;
 }
 
+function flagHTML(f){
+  return `<div class="flag ${f.level === "mid" ? "mid" : ""} ${f.done ? "off" : ""}" data-id="${esc(f.id)}">
+    <b>${esc(f.title)}</b>${f.detail ? `<p>${esc(f.detail)}</p>` : ""}${f.fix ? `<p class="fix">Fix: ${esc(f.fix)}</p>` : ""}
+    <div class="flag-actions">
+      <button class="textbtn" data-act="toggle">${f.done ? "Bring back" : "Handled, dismiss"}</button>
+      <button class="textbtn" data-act="edit" aria-expanded="${editing === f.id}">Edit</button>
+      <button class="textbtn" data-act="del" aria-label="Delete ${esc(f.title)}">Delete</button>
+    </div>${editorHTML(f)}</div>`;
+}
 function renderFlags(){
-  const flags = of("flag").filter(f => !f.done);
-  $("flagsWrap").innerHTML = !flags.length ? "" : `
-    <div class="sec-head" style="--bc:var(--crit)"><h2>Blind spots</h2><span class="count">${flags.length} open</span><span class="rule"></span>
-      <span class="why">Gaps between what you agreed to and what your tracker says. Dismiss each once it's handled.</span></div>
-    <div class="flags">${flags.map(f => `<div class="flag ${f.level === "mid" ? "mid" : ""}" data-id="${esc(f.id)}">
-      <b>${esc(f.title)}</b><p>${esc(f.detail)}</p>${f.fix ? `<p class="fix">Fix: ${esc(f.fix)}</p>` : ""}
-      <button class="dismiss" data-act="toggle">Handled, dismiss</button></div>`).join("")}</div>`;
+  const all = of("flag"), open = all.filter(f => !f.done), off = all.filter(f => f.done);
+  $("flagsWrap").innerHTML = `
+    <div class="sec-head" style="--bc:var(--crit)"><h2>Blind spots</h2><span class="count">${open.length} open</span><span class="rule"></span>
+      <span class="why">Gaps between what you agreed to and what your tracker says. Edit any of them, dismiss each once it's handled.</span></div>
+    <div class="flags">${open.length ? open.map(flagHTML).join("") : `<div class="list"><div class="empty">${loaded ? "No open blind spots." : "Loading…"}</div></div>`}
+      ${off.length ? `<button class="textbtn" data-act="showoff" style="align-self:flex-start">${showOffFlags ? "Hide" : "Show"} ${off.length} dismissed</button>` : ""}
+      ${showOffFlags ? off.map(flagHTML).join("") : ""}</div>
+    <form class="addbar" id="addFlag" style="max-width:860px">
+      <input class="ctl" id="af-title" placeholder="Add a blind spot…" aria-label="New blind spot" autocomplete="off">
+      <button class="btn" type="submit">Add</button>
+    </form>`;
 }
 
 function renderActions(){
@@ -455,12 +524,20 @@ function renderProjects(){
               ${p.sub ? `<span class="pill">${esc(p.sub)}</span>` : ""}${p.owner ? `<span class="pill">Owner: ${esc(p.owner)}</span>` : ""}
               ${dl ? `<span class="pill due ${/overdue/i.test(dl) ? "over" : dueClass(p.due)}">Due ${esc(dl)}</span>` : ""}
             </div></div>
-          <div class="r-side"><button class="icobtn" data-act="del" aria-label="Delete ${esc(p.title)}">${TRASH}</button></div></div>`;
+          <div class="r-side">${editBtn(p)}<button class="icobtn" data-act="del" aria-label="Delete ${esc(p.title)}">${TRASH}</button></div>
+          ${editorHTML(p)}</div>`;
       }).join("")}</div></div>`;
   }).join("") || `<div class="list"><div class="empty">Nothing matches these filters.</div></div>`;
 }
 
-function render(){ stats(); renderActions(); renderCalendar(); renderSandbox(); renderProjects(); }
+function render(){
+  // keep the cursor where it was if a live update lands while an editor is open
+  const a = document.activeElement, f = a && a.dataset && a.closest && a.closest("[data-editor]") ? a.dataset.f : null;
+  const sel = f && typeof a.selectionStart === "number" ? [a.selectionStart, a.selectionEnd] : null;
+  if (editing && !items.some(i => i.id === editing)){ editing = null; draft = {}; }
+  stats(); renderActions(); renderCalendar(); renderSandbox(); renderProjects();
+  if (f){ const el = document.querySelector(`[data-editor] [data-f="${f}"]`); if (el){ el.focus(); if (sel) try { el.setSelectionRange(sel[0], sel[1]); } catch(e){} } }
+}
 
 /* ---------- tabs ---------- */
 const VIEWS = ["actions","calendar","sandbox","projects"];
@@ -477,6 +554,9 @@ show(location.hash.slice(1));
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-act]"); if (!b) return;
   const host = b.closest("[data-id]"); const id = host && host.dataset.id; const it = items.find(i => i.id === id);
+  if (b.dataset.act === "showoff"){ showOffFlags = !showOffFlags; renderFlags(); return; }
+  if (b.dataset.act === "cancel"){ editing = null; draft = {}; render(); return; }
+  if (b.dataset.act === "edit" && it){ if (editing === id){ editing = null; draft = {}; render(); } else openEditor(it); return; }
   if (b.dataset.act === "toggle" && it) patch(id, {done: !it.done});
   else if (b.dataset.act === "complete" && it) patch(id, {status: isDone(it) ? (it.prevStatus || "In progress") : "Completed and verified", prevStatus: it.status});
   else if (b.dataset.act === "del" && it){
@@ -484,8 +564,31 @@ document.addEventListener("click", e => {
     else { b.dataset.armed = "1"; b.style.color = "var(--crit)"; b.style.borderColor = "var(--crit)"; b.setAttribute("aria-label", "Tap again to delete"); b.title = "Tap again to delete"; setTimeout(() => { if (b.isConnected){ delete b.dataset.armed; b.style.color = ""; b.style.borderColor = ""; b.title = ""; } }, 3000); }
   }
 });
+document.addEventListener("input", e => { if (e.target.dataset && e.target.dataset.f && e.target.closest("[data-editor]")) draft[e.target.dataset.f] = e.target.value; });
+document.addEventListener("submit", e => {
+  const form = e.target;
+  if (form.id === "addFlag"){
+    e.preventDefault(); const t = $("af-title").value.trim(); if (!t) return;
+    create({kind:"flag", title:t, detail:"", fix:"", level:"mid", done:false, order:nextOrder("flag")}); return;
+  }
+  if (!form.dataset || !form.dataset.editor) return;
+  e.preventDefault();
+  const id = form.dataset.editor, it = items.find(i => i.id === id); if (!it) return;
+  form.querySelectorAll("[data-f]").forEach(el => { draft[el.dataset.f] = el.value; });
+  const changes = {};
+  (FIELDS[it.kind] || []).forEach(([k,,type]) => {
+    let v = draft[k]; if (typeof v === "string") v = v.trim();
+    if (type === "number") v = Number(v) || 30;
+    if (k === "title" && !v) return;           // never blank a title
+    if (k === "date" && it.kind === "cal" && !parseDate(v)) return;
+    if (v !== (it[k] ?? "")) changes[k] = v;
+  });
+  editing = null; draft = {};
+  if (Object.keys(changes).length) patch(id, changes); else render();
+});
 document.addEventListener("change", e => {
   const el = e.target, host = el.closest("[data-id]"); const id = host && host.dataset.id;
+  if (el.closest("[data-editor]")) return;
   if (el.dataset.act === "status" && id){ const it = items.find(i => i.id === id); patch(id, {status: el.value, prevStatus: it ? it.status : null}); }
   if (el.dataset.act === "time" && id && /^\d{2}:\d{2}$/.test(el.value)) patch(id, {time: el.value});
 });
