@@ -1,0 +1,524 @@
+<title>SNS Command Board</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Luxurious+Script&family=Playfair+Display:wght@500;600;700&display=swap">
+<style>
+/* Layout: country-club command board. Sticky clubhouse header with tabs, stat strip, then one tab at a time:
+   Actions (grouped checklist + blind spots), Calendar (time blocks), Cody's Sandbox (not ours), Projects (by area). */
+:root{
+  color-scheme:light;
+  --ground:#F1E9D9; --panel:#FCF8EF; --raise:#FFFFFF;
+  --text:#253A2C; --text-2:#5C6B58; --muted:#8C876F;
+  --hair:#E3D8C2; --line-soft:#EFE7D5;
+  --a-sns:#2E6A45; --a-email:#D2694F; --a-tech:#A87C3D; --a-cs:#4E82A8; --a-cody:#B85C74;
+  --accent:#24503A; --accent-2:#3F7A54; --eyebrow:#A87C3D; --head:#1F4A34; --on-accent:#FBF6EC;
+  --good:#3F7A54; --warn:#C08A3E; --crit:#BB4F3E;
+  --shadow:0 2px 5px rgba(52,46,28,.09),0 20px 44px -18px rgba(52,46,28,.28);
+  --shadow-sm:0 1px 3px rgba(52,46,28,.09),0 12px 24px -14px rgba(52,46,28,.2);
+  --serif:"Playfair Display","Iowan Old Style",Georgia,"Times New Roman",serif;
+  --script:"Luxurious Script","Snell Roundhand","Apple Chancery",cursive;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --ground:#13241B; --panel:#1B3225; --raise:#214031;
+  --text:#F1E9D6; --text-2:#C6CDB6; --muted:#8E9782;
+  --hair:#2E4838; --line-soft:#22392C;
+  --a-sns:#74C68C; --a-email:#F2957C; --a-tech:#DDB86E; --a-cs:#93C4E2; --a-cody:#E79BAD;
+  --accent:#4E9468; --accent-2:#74C68C; --eyebrow:#DDB86E; --head:#ECE3CF; --on-accent:#14271C;
+  --good:#74C68C; --warn:#DDB86E; --crit:#E8836F;
+  --shadow:0 2px 6px rgba(0,0,0,.5),0 22px 48px -18px rgba(0,0,0,.7);
+  --shadow-sm:0 1px 3px rgba(0,0,0,.45),0 12px 26px -14px rgba(0,0,0,.55);}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#13241B; --panel:#1B3225; --raise:#214031;
+  --text:#F1E9D6; --text-2:#C6CDB6; --muted:#8E9782;
+  --hair:#2E4838; --line-soft:#22392C;
+  --a-sns:#74C68C; --a-email:#F2957C; --a-tech:#DDB86E; --a-cs:#93C4E2; --a-cody:#E79BAD;
+  --accent:#4E9468; --accent-2:#74C68C; --eyebrow:#DDB86E; --head:#ECE3CF; --on-accent:#14271C;
+  --good:#74C68C; --warn:#DDB86E; --crit:#E8836F;
+  --shadow:0 2px 6px rgba(0,0,0,.5),0 22px 48px -18px rgba(0,0,0,.7);
+  --shadow-sm:0 1px 3px rgba(0,0,0,.45),0 12px 26px -14px rgba(0,0,0,.55);}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);background:var(--ground);color:var(--text);line-height:1.5;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:var(--ground)}
+h1,h2,h3{margin:0;text-wrap:balance}
+button,select,input{font-family:var(--sans)}
+:focus-visible{outline:2px solid var(--accent-2);outline-offset:2px}
+.eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--eyebrow);font-weight:700}
+
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:color-mix(in srgb,var(--ground) 90%,transparent);backdrop-filter:saturate(1.3) blur(10px);border-bottom:1px solid var(--hair)}
+.head-in{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 0;display:flex;flex-direction:column;gap:10px}
+.brand{display:flex;align-items:center;gap:12px}
+.mark{width:36px;height:36px;flex:none}
+.wordmark{display:flex;flex-direction:column;line-height:1}
+.wordmark b{font-family:var(--script);font-weight:400;font-size:26px;color:var(--head)}
+.wordmark span{font-size:8.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--eyebrow);margin-top:6px;font-weight:700}
+.sync{margin-left:auto;font-size:11.5px;color:var(--muted);font-weight:600;text-align:right}
+.sync.bad{color:var(--crit)}
+nav.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;margin-bottom:-1px}
+nav.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;font-size:13px;font-weight:600;color:var(--text-2);background:none;border:0;border-bottom:2px solid transparent;padding:9px 12px 10px;cursor:pointer;display:inline-flex;gap:7px;align-items:center}
+.tab:hover{color:var(--text)}
+.tab[aria-selected="true"]{color:var(--head);border-bottom-color:var(--accent)}
+.tab .n{font-size:11px;font-variant-numeric:tabular-nums;background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);border-radius:100px;padding:0 7px}
+.tab svg{width:15px;height:15px}
+
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:22px 24px;display:flex;flex-direction:column;gap:22px}
+.intro h1{font-family:var(--script);font-weight:400;color:var(--head);font-size:clamp(36px,6vw,56px);line-height:1.05}
+.intro h1 em{font-style:normal;color:var(--a-email)}
+.intro p{font-size:15px;color:var(--text-2);margin:10px 0 0;max-width:66ch}
+
+.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1px;background:var(--hair);border:1px solid var(--hair);border-radius:var(--r);overflow:hidden}
+@media (max-width:760px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stat:last-child{grid-column:1/-1}}
+.stat{background:var(--panel);padding:14px 16px;min-width:0}
+.s-lab{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.s-val{font-family:var(--serif);font-size:30px;font-weight:600;font-variant-numeric:lining-nums tabular-nums;line-height:1.05;margin-top:5px}
+.s-sub{font-size:11.5px;color:var(--text-2);margin-top:4px}
+.s-val.warn{color:var(--warn)} .s-val.crit{color:var(--crit)} .s-val.good{color:var(--good)}
+
+.sec-head{display:flex;align-items:center;gap:12px;margin:4px 2px 12px}
+.sec-head h2{font-family:var(--serif);font-size:22px;font-weight:600;color:var(--head);line-height:1.1}
+.sec-head .count{font-size:12px;color:var(--muted);font-weight:700}
+.sec-head .rule{flex:1;height:2px;border-radius:2px;background:linear-gradient(90deg,color-mix(in srgb,var(--bc,var(--eyebrow)) 55%,transparent),transparent)}
+.sec-head .why{font-size:12.5px;color:var(--text-2);flex-basis:100%;margin-top:-6px}
+.sec-head{flex-wrap:wrap}
+.panel-note{font-size:13px;color:var(--text-2);max-width:78ch}
+
+/* list cards */
+.list{background:var(--panel);border:1px solid var(--hair);border-radius:var(--r);box-shadow:var(--shadow-sm);overflow:hidden}
+.row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 14px;border-left:3px solid var(--bc,var(--accent))}
+.row + .row{border-top:1px solid var(--line-soft)}
+.row.done .r-title{text-decoration:line-through;text-decoration-color:var(--muted);color:var(--muted)}
+.row.done{opacity:.72}
+.r-title{font-size:14.5px;font-weight:700;line-height:1.35}
+.r-detail{font-size:12.8px;color:var(--text-2);margin-top:3px;line-height:1.45}
+.r-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
+.r-side{display:flex;align-items:center;gap:6px}
+.check{width:21px;height:21px;border-radius:6px;border:2px solid var(--hair);background:transparent;cursor:pointer;display:grid;place-items:center;margin-top:1px;color:var(--on-accent);padding:0}
+.check:hover{border-color:var(--good)}
+.check svg{width:12px;height:12px;opacity:0}
+.row.done .check{background:var(--good);border-color:var(--good)}
+.row.done .check svg{opacity:1}
+.icobtn{width:28px;height:28px;border-radius:7px;border:1px solid var(--hair);background:var(--panel);color:var(--muted);cursor:pointer;display:grid;place-items:center;padding:0}
+.icobtn:hover{color:var(--crit);border-color:var(--crit)}
+.icobtn svg{width:13px;height:13px}
+.pill{font-size:10.5px;font-weight:700;letter-spacing:.03em;padding:3px 9px;border-radius:100px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;background:color-mix(in srgb,var(--pc,var(--text-2)) 14%,transparent);color:var(--pc,var(--text-2))}
+.pill.area{--pc:var(--bc)}
+.pill.due.over{--pc:var(--crit)} .pill.due.soon{--pc:var(--warn)}
+.pill.sug{--pc:var(--eyebrow);border:1px dashed currentColor;background:transparent}
+.empty{padding:18px 16px;font-size:13px;color:var(--muted)}
+
+/* flags */
+.flags{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px}
+.flag{background:var(--panel);border:1px solid var(--hair);border-left:4px solid var(--crit);border-radius:var(--r);box-shadow:var(--shadow-sm);padding:13px 15px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.flag.mid{border-left-color:var(--warn)}
+.flag b{font-size:14px;line-height:1.3}
+.flag p{margin:0;font-size:12.8px;color:var(--text-2)}
+.flag .fix{color:var(--text);font-weight:600}
+.flag .dismiss{align-self:flex-start;font-size:11.5px;font-weight:700;color:var(--muted);background:none;border:0;padding:2px 0;cursor:pointer}
+.flag .dismiss:hover{color:var(--good)}
+
+/* calendar */
+.cal-day{display:grid;grid-template-columns:86px minmax(0,1fr);gap:14px;align-items:start}
+.cal-day + .cal-day{margin-top:16px}
+.cal-date{text-align:center;background:var(--panel);border:1px solid var(--hair);border-radius:12px;padding:8px 4px;box-shadow:var(--shadow-sm)}
+.cal-date .dow{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--eyebrow);font-weight:700}
+.cal-date .dn{font-family:var(--serif);font-size:30px;font-weight:600;line-height:1;margin-top:2px}
+.cal-date .mo{font-size:11px;color:var(--muted);font-weight:600}
+.time{font-size:12.5px;font-weight:600;color:var(--text);background:var(--ground);border:1px solid var(--hair);border-radius:7px;padding:4px 6px;width:auto}
+.gcal{font-size:12px;font-weight:700;color:var(--accent);text-decoration:none;border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);border-radius:100px;padding:4px 10px;white-space:nowrap}
+.gcal:hover{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+@media (max-width:520px){.cal-day{grid-template-columns:minmax(0,1fr)}.cal-date{display:flex;gap:8px;align-items:baseline;justify-content:flex-start;padding:6px 12px;text-align:left}.cal-date .dn{font-size:22px}}
+
+/* sandbox */
+.sandbox-hero{background:var(--panel);border:1px solid var(--hair);border-radius:var(--r);padding:16px 18px;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:6px}
+.sandbox-hero .rulebox{font-family:var(--serif);font-size:19px;color:var(--head);line-height:1.3;max-width:62ch}
+
+/* projects */
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font-size:12px;font-weight:600;padding:6px 12px;border-radius:100px;border:1px solid var(--hair);background:var(--panel);color:var(--text-2);cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.chip:hover{border-color:var(--bc,var(--accent-2));color:var(--text)}
+.chip.on{color:var(--on-accent);background:var(--bc,var(--accent));border-color:var(--bc,var(--accent))}
+.chip .cdot{width:8px;height:8px;border-radius:50%;background:var(--bc,var(--accent))}
+.chip.on .cdot{background:currentColor}
+select.ctl,input.ctl{font-size:12.5px;font-weight:600;color:var(--text);background:var(--panel);border:1px solid var(--hair);border-radius:8px;padding:7px 10px;min-width:0}
+select.ctl:focus,input.ctl:focus{outline:none;border-color:var(--accent-2)}
+.status-sel{font-size:11px;font-weight:700;border-radius:100px;padding:3px 8px;border:1px solid color-mix(in srgb,var(--sc) 40%,transparent);background:color-mix(in srgb,var(--sc) 13%,transparent);color:var(--sc);cursor:pointer;max-width:100%}
+.next{font-size:12.5px;color:var(--text-2);margin-top:4px}
+.next b{color:var(--text);font-weight:600}
+.r-detail a{color:var(--accent);font-weight:600}
+
+/* add bar */
+.addbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.addbar input{flex:1 1 240px}
+.addbar select{flex:0 1 auto}
+.btn{font-size:12.5px;font-weight:700;color:var(--on-accent);background:var(--accent);border:1px solid var(--accent);border-radius:100px;padding:8px 15px;cursor:pointer}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:var(--panel);color:var(--text-2);border-color:var(--hair)}
+.ro .addbar,.ro .icobtn{display:none}
+.ro .check,.ro .status-sel,.ro .time{pointer-events:none}
+
+footer{position:relative;overflow:hidden;max-width:1180px;margin:20px auto 0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px 76px;border-top:1px solid var(--hair)}
+footer p{position:relative;z-index:1;font-size:11.5px;color:var(--muted);margin:0;max-width:720px}
+.scene{position:absolute;left:0;right:0;bottom:0;height:96px;pointer-events:none}
+.scene svg{position:absolute;bottom:0;display:block}
+.grass{left:0;width:100%;height:100%}
+.props{right:24px;width:240px;height:100%}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header>
+  <div class="head-in">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <circle cx="20" cy="20" r="18" stroke="var(--accent)" stroke-width="1.5"/>
+        <ellipse cx="21" cy="29" rx="9" ry="2.4" fill="var(--accent-2)" opacity=".85"/>
+        <path d="M15.5 29V11.5" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M15.5 11.5 27 14.2 15.5 17.6Z" fill="var(--a-email)"/>
+        <circle cx="24.5" cy="29" r="1.5" fill="var(--accent)"/>
+      </svg>
+      <div class="wordmark"><b>SNS Command Board</b><span>Running project list</span></div>
+      <div class="sync" id="sync">Connecting…</div>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Views">
+      <button class="tab" role="tab" id="tab-actions" data-view="actions" aria-selected="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 6.5h10M10 12h10M10 17.5h10"/><path d="m3.4 6.2 1.3 1.3L7 5.2M3.4 11.7 4.7 13 7 10.7M3.6 17.5h2.8"/></svg>Actions <span class="n" id="n-actions">0</span></button>
+      <button class="tab" role="tab" id="tab-calendar" data-view="calendar" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg>Calendar <span class="n" id="n-calendar">0</span></button>
+      <button class="tab" role="tab" id="tab-sandbox" data-view="sandbox" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 19h18"/><path d="M5 19c1-5 4-8 7-8s6 3 7 8"/><path d="M12 11V4"/><path d="m12 4 5 1.5L12 7"/></svg>Cody's Sandbox <span class="n" id="n-sandbox">0</span></button>
+      <button class="tab" role="tab" id="tab-projects" data-view="projects" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="4" width="7" height="7" rx="1.5"/><rect x="13.5" y="4" width="7" height="7" rx="1.5"/><rect x="3.5" y="14" width="7" height="6" rx="1.5"/><rect x="13.5" y="14" width="7" height="6" rx="1.5"/></svg>Projects <span class="n" id="n-projects">0</span></button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap" id="app">
+  <div class="intro">
+    <div class="eyebrow">From the Nov 5 meeting with Cody · live list</div>
+    <h1>Real commitments. <em>Not</em> every passing idea.</h1>
+    <p>What you owe this week, what earns a calendar block, what stays in Cody's sandbox, and every SNS project by area. Tick things off here; the list keeps your changes.</p>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <!-- ACTIONS -->
+  <section id="view-actions" class="view" role="tabpanel" aria-labelledby="tab-actions">
+    <div id="flagsWrap"></div>
+    <div id="actionGroups"></div>
+    <form class="addbar" id="addAction">
+      <input class="ctl" id="aa-title" placeholder="Add an action…" aria-label="New action" autocomplete="off">
+      <select class="ctl" id="aa-group" aria-label="When"></select>
+      <button class="btn" type="submit">Add</button>
+    </form>
+  </section>
+
+  <!-- CALENDAR -->
+  <section id="view-calendar" class="view" role="tabpanel" aria-labelledby="tab-calendar" hidden>
+    <div class="sec-head" style="--bc:var(--accent)"><h2>Blocks worth a calendar slot</h2><span class="count" id="calCount"></span><span class="rule"></span>
+      <span class="why">Only focused work blocks. Everything else lives on the action list. Times are placeholders in Central Time: change one here, then use "Add to Google Calendar" to drop it in.</span></div>
+    <div id="calDays"></div>
+    <form class="addbar" id="addCal">
+      <input class="ctl" id="ac-title" placeholder="New calendar block…" aria-label="New calendar block" autocomplete="off">
+      <input class="ctl" id="ac-date" type="date" aria-label="Date" value="2026-11-09" style="flex:0 1 160px">
+      <input class="ctl" id="ac-dur" type="number" min="5" step="5" value="30" aria-label="Minutes" style="flex:0 1 90px">
+      <button class="btn" type="submit">Add block</button>
+    </form>
+  </section>
+
+  <!-- SANDBOX -->
+  <section id="view-sandbox" class="view" role="tabpanel" aria-labelledby="tab-sandbox" hidden>
+    <div class="sandbox-hero">
+      <div class="eyebrow">Not on your calendar</div>
+      <div class="rulebox">These are Cody's ideas, not your assignments. He owns each one until it has an approved project, a clear scope, and a named owner.</div>
+      <p class="panel-note">If one graduates, move it to Projects with scope and owner filled in. Until then it gets zero of your hours.</p>
+    </div>
+    <div class="list" id="sandboxList" style="--bc:var(--a-cody)"></div>
+    <form class="addbar" id="addSandbox">
+      <input class="ctl" id="as-title" placeholder="Park another Cody idea…" aria-label="New Cody idea" autocomplete="off">
+      <button class="btn" type="submit">Park it</button>
+    </form>
+  </section>
+
+  <!-- PROJECTS -->
+  <section id="view-projects" class="view" role="tabpanel" aria-labelledby="tab-projects" hidden>
+    <div class="toolbar" id="areaChips"></div>
+    <div class="toolbar">
+      <select class="ctl" id="f-status" aria-label="Filter by status"></select>
+      <select class="ctl" id="f-owner" aria-label="Filter by owner"></select>
+      <label class="chip" style="cursor:pointer"><input type="checkbox" id="f-hide" style="margin:0"> Hide completed</label>
+    </div>
+    <div id="projectAreas"></div>
+    <form class="addbar" id="addProject">
+      <input class="ctl" id="ap-title" placeholder="New project…" aria-label="New project" autocomplete="off">
+      <select class="ctl" id="ap-area" aria-label="Area"></select>
+      <input class="ctl" id="ap-owner" placeholder="Owner" aria-label="Owner" value="Katerina" style="flex:0 1 130px">
+      <button class="btn" type="submit">Add project</button>
+    </form>
+  </section>
+</main>
+
+<footer>
+  <p>Data is stored with this page and readable only by you and anyone you make an Editor. Keep it that way: the Sandbox tab is candid. Status labels: Planned, Assigned, In progress, Awaiting review, Blocked, Completed and verified.</p>
+  <div class="scene" aria-hidden="true">
+    <svg class="grass" viewBox="0 0 1200 96" fill="none" preserveAspectRatio="none">
+      <path d="M0 96V64Q300 54 700 60q300 4 500-5v41Z" fill="var(--a-sns)" opacity=".26"/>
+      <path d="M0 96V68Q260 60 600 64q300 3 600-5v37Z" fill="var(--accent-2)"/>
+      <path d="M0 68Q260 60 600 64q300 3 600-5" stroke="var(--accent)" stroke-width="1.2" vector-effect="non-scaling-stroke"/>
+    </svg>
+    <svg class="props" viewBox="0 0 240 96" fill="none">
+      <path d="M60 66V32" stroke="var(--head)" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="m60 32 14 3.6-14 3.6Z" fill="var(--a-email)"/>
+      <path d="m194.6 66 1.4 6 1.4-6Z" fill="var(--eyebrow)"/>
+      <path d="M192.6 65.8h6.8" stroke="var(--eyebrow)" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="196" cy="59.5" r="6.4" fill="var(--raise)" stroke="var(--accent)" stroke-width="1.3"/>
+    </svg>
+  </div>
+</footer>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const TODAY = (() => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); })();
+
+const AREAS = {
+  sns:   {label:"SNS Funnel Restructuring", short:"SNS Funnels", color:"var(--a-sns)"},
+  email: {label:"Email Revenue Management", short:"Email Revenue", color:"var(--a-email)"},
+  tech:  {label:"WBM Shared Technology", short:"Shared Tech", color:"var(--a-tech)"},
+  cs:    {label:"Customer Service: HelpGrid Transition", short:"HelpGrid → Rose", color:"var(--a-cs)"}
+};
+const AREA_ORDER = ["sns","email","tech","cs"];
+const GROUPS = [
+  {id:"fri", label:"Tomorrow · Friday Nov 6"},
+  {id:"week", label:"Next week · Nov 9–13"},
+  {id:"ai", label:"Controlled AI experiment · no hard deadline"},
+  {id:"monitor", label:"Monitor through early December"},
+  {id:"later", label:"Later / unsorted"}
+];
+const STATUSES = ["Planned","Assigned","In progress","Awaiting review","Blocked","Completed and verified"];
+const STATUS_COLOR = {"Planned":"var(--muted)","Assigned":"var(--a-cs)","In progress":"var(--accent-2)","Awaiting review":"var(--warn)","Blocked":"var(--crit)","Completed and verified":"var(--good)"};
+const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
+const TRASH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>';
+
+let items = [];       // all docs: {id, ...data}
+let col = null;       // collection ref
+let canWrite = true;
+let loaded = false;
+const ui = {view:"actions", area:"all", status:"all", owner:"all", hide:false};
+try { const s = JSON.parse(localStorage.getItem("sns-cmd-ui") || "{}"); Object.assign(ui, {area:s.area||"all", status:s.status||"all", owner:s.owner||"all", hide:!!s.hide}); } catch(e){}
+const saveUi = () => { try { localStorage.setItem("sns-cmd-ui", JSON.stringify({area:ui.area,status:ui.status,owner:ui.owner,hide:ui.hide})); } catch(e){} };
+
+const of = k => items.filter(i => i.kind === k).sort((a,b) => (a.order ?? 999) - (b.order ?? 999) || String(a.title).localeCompare(b.title));
+function parseDate(s){ if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return null; const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d); }
+function dueClass(s){ const d = parseDate(s); if (!d) return ""; const days = (d - TODAY)/864e5; return days < 0 ? "over" : days <= 3 ? "soon" : ""; }
+const isDone = p => p.status === "Completed and verified";
+
+/* ---------- writes ---------- */
+function setSync(text, bad){ const el = $("sync"); el.textContent = text; el.classList.toggle("bad", !!bad); }
+async function write(fn){
+  if (!col || !canWrite) return;
+  try { await fn(); }
+  catch(e){
+    if (e && e.code === "invalid_argument"){ canWrite = false; document.body.classList.add("ro"); setSync("Read-only for you", true); }
+    else if (e && e.code === "quota_exceeded"){ setSync("Storage is full. Delete finished items.", true); }
+    else setSync("Couldn't save. Try again.", true);
+  }
+}
+const patch = (id, data) => write(() => col.doc(id).update(data));
+const remove = id => write(() => col.doc(id).delete());
+const create = data => write(() => col.add(Object.assign({created: new Date().toISOString()}, data)));
+const nextOrder = kind => Math.max(0, ...of(kind).map(i => i.order || 0)) + 1;
+
+/* ---------- render ---------- */
+function stats(){
+  const acts = of("action"), open = acts.filter(a => !a.done);
+  const fri = open.filter(a => a.group === "fri").length;
+  const projs = of("project");
+  const prog = projs.filter(p => p.status === "In progress").length;
+  const review = projs.filter(p => p.status === "Awaiting review").length;
+  const overdue = projs.filter(p => !isDone(p) && (dueClass(p.due) === "over" || /overdue/i.test(p.dueLabel||""))).length;
+  const cards = [
+    ["Open actions", open.length, `${acts.length - open.length} of ${acts.length} done`, ""],
+    ["Due Friday", fri, "Rose, Annie, Gustavo, Savannah", fri ? "warn" : "good"],
+    ["Projects in progress", prog, `${projs.filter(p=>!isDone(p)).length} open projects`, ""],
+    ["Awaiting review", review, "need your eyes", review ? "warn" : ""],
+    ["Overdue", overdue, "past their deadline", overdue ? "crit" : "good"]
+  ];
+  $("stats").innerHTML = cards.map(([l,v,s,c]) => `<div class="stat"><div class="s-lab">${l}</div><div class="s-val ${c}">${loaded ? v : "—"}</div><div class="s-sub">${s}</div></div>`).join("");
+  $("n-actions").textContent = open.length;
+  $("n-calendar").textContent = of("cal").filter(c => !c.done && !c.suggested).length;
+  $("n-sandbox").textContent = of("cody").length;
+  $("n-projects").textContent = projs.filter(p => !isDone(p)).length;
+}
+
+function rowHTML(it, opts){
+  const area = AREAS[it.area];
+  const bc = opts.color || (area ? area.color : "var(--accent)");
+  return `<div class="row ${it.done ? "done" : ""}" style="--bc:${bc}" data-id="${esc(it.id)}">
+    <button class="check" data-act="toggle" aria-label="${it.done ? "Mark not done" : "Mark done"}: ${esc(it.title)}" aria-pressed="${!!it.done}">${CHECK}</button>
+    <div style="min-width:0"><div class="r-title">${esc(it.title)}</div>${it.detail ? `<div class="r-detail">${esc(it.detail)}</div>` : ""}
+      <div class="r-meta">${opts.meta || ""}</div></div>
+    <div class="r-side">${opts.side || ""}<button class="icobtn" data-act="del" aria-label="Delete ${esc(it.title)}">${TRASH}</button></div>
+  </div>`;
+}
+
+function renderFlags(){
+  const flags = of("flag").filter(f => !f.done);
+  $("flagsWrap").innerHTML = !flags.length ? "" : `
+    <div class="sec-head" style="--bc:var(--crit)"><h2>Blind spots</h2><span class="count">${flags.length} open</span><span class="rule"></span>
+      <span class="why">Gaps between what you agreed to and what your tracker says. Dismiss each once it's handled.</span></div>
+    <div class="flags">${flags.map(f => `<div class="flag ${f.level === "mid" ? "mid" : ""}" data-id="${esc(f.id)}">
+      <b>${esc(f.title)}</b><p>${esc(f.detail)}</p>${f.fix ? `<p class="fix">Fix: ${esc(f.fix)}</p>` : ""}
+      <button class="dismiss" data-act="toggle">Handled, dismiss</button></div>`).join("")}</div>`;
+}
+
+function renderActions(){
+  renderFlags();
+  const acts = of("action");
+  if (!acts.length){ $("actionGroups").innerHTML = `<div class="list"><div class="empty">${loaded ? "No actions yet. Add the first one below." : "Loading your actions…"}</div></div>`; return; }
+  $("actionGroups").innerHTML = GROUPS.map(g => {
+    const list = acts.filter(a => (a.group || "later") === g.id);
+    if (!list.length) return "";
+    const done = list.filter(a => a.done).length;
+    return `<div style="margin-top:18px"><div class="sec-head"><h2>${esc(g.label)}</h2><span class="count">${done} of ${list.length} done</span><span class="rule"></span></div>
+      <div class="list">${list.map(a => rowHTML(a, {meta:
+        `${AREAS[a.area] ? `<span class="pill area">${esc(AREAS[a.area].short)}</span>` : ""}${a.priority ? `<span class="pill">${esc(a.priority)}</span>` : ""}${a.owner ? `<span class="pill">Owner: ${esc(a.owner)}</span>` : ""}`
+      })).join("")}</div></div>`;
+  }).join("");
+}
+
+function fmt12(t){ if (!/^\d{2}:\d{2}$/.test(t||"")) return ""; let [h,m] = t.split(":").map(Number); const ap = h >= 12 ? "PM" : "AM"; h = h % 12 || 12; return `${h}:${String(m).padStart(2,"0")} ${ap}`; }
+function gcalLink(c){
+  const d = parseDate(c.date); if (!d) return "";
+  const [h,m] = (/^\d{2}:\d{2}$/.test(c.time||"") ? c.time : "09:00").split(":").map(Number);
+  const s = new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m), e = new Date(s.getTime() + (Number(c.dur)||30)*6e4);
+  const f = x => `${x.getFullYear()}${String(x.getMonth()+1).padStart(2,"0")}${String(x.getDate()).padStart(2,"0")}T${String(x.getHours()).padStart(2,"0")}${String(x.getMinutes()).padStart(2,"0")}00`;
+  const q = new URLSearchParams({action:"TEMPLATE", text:c.title, dates:`${f(s)}/${f(e)}`, ctz:"America/Chicago", details:c.detail || ""});
+  return `https://calendar.google.com/calendar/render?${q.toString()}`;
+}
+function renderCalendar(){
+  const cals = of("cal").slice().sort((a,b) => String(a.date).localeCompare(String(b.date)) || String(a.time).localeCompare(String(b.time)));
+  const real = cals.filter(c => !c.suggested);
+  $("calCount").textContent = loaded ? `${real.length} blocks · ${real.reduce((t,c)=>t+(Number(c.dur)||0),0)} min total` : "";
+  if (!cals.length){ $("calDays").innerHTML = `<div class="list"><div class="empty">${loaded ? "No blocks yet." : "Loading your calendar…"}</div></div>`; return; }
+  const days = [...new Set(cals.map(c => c.date))];
+  $("calDays").innerHTML = days.map(ds => {
+    const d = parseDate(ds);
+    const head = d ? `<div class="dow">${d.toLocaleDateString("en-US",{weekday:"short"})}</div><div class="dn">${d.getDate()}</div><div class="mo">${d.toLocaleDateString("en-US",{month:"short"})}</div>` : `<div class="dn">?</div>`;
+    return `<div class="cal-day"><div class="cal-date">${head}</div><div class="list">${cals.filter(c => c.date === ds).map(c => rowHTML(c, {
+      color: c.suggested ? "var(--eyebrow)" : (AREAS[c.area] ? AREAS[c.area].color : "var(--accent)"),
+      meta: `<span class="pill">${esc(c.dur)} min</span>${c.suggested ? `<span class="pill sug">Suggested add, not agreed</span>` : ""}<input class="time" type="time" step="300" id="t-${esc(c.id)}" value="${esc(c.time||"09:00")}" data-act="time" aria-label="Start time for ${esc(c.title)}"><span class="pill">${fmt12(c.time||"09:00")} CT</span>`,
+      side: `<a class="gcal" href="${esc(gcalLink(c))}" target="_blank" rel="noopener">Add to Google Calendar</a>`
+    })).join("")}</div></div>`;
+  }).join("");
+}
+
+function renderSandbox(){
+  const xs = of("cody");
+  $("sandboxList").innerHTML = xs.length ? xs.map(x => rowHTML(x, {color:"var(--a-cody)", meta:`<span class="pill" style="--pc:var(--a-cody)">${x.done ? "Dropped or resolved" : "Cody owns it"}</span>`})).join("")
+    : `<div class="empty">${loaded ? "Nothing parked. Enjoy it while it lasts." : "Loading…"}</div>`;
+}
+
+function fillSelect(el, opts, val){ el.innerHTML = opts.map(([v,l]) => `<option value="${esc(v)}"${v === val ? " selected" : ""}>${esc(l)}</option>`).join(""); }
+function renderProjects(){
+  const projs = of("project");
+  const owners = [...new Set(projs.map(p => p.owner).filter(Boolean))].sort();
+  $("areaChips").innerHTML = [["all","All areas","var(--accent)"], ...AREA_ORDER.map(k => [k, AREAS[k].short, AREAS[k].color])].map(([k,l,c]) => {
+    const n = k === "all" ? projs.filter(p=>!isDone(p)).length : projs.filter(p => p.area === k && !isDone(p)).length;
+    return `<button class="chip ${ui.area === k ? "on" : ""}" style="--bc:${c}" data-area="${k}" aria-pressed="${ui.area === k}">${k !== "all" ? '<span class="cdot"></span>' : ""}${esc(l)} <span style="opacity:.65">${n}</span></button>`;
+  }).join("");
+  fillSelect($("f-status"), [["all","All statuses"], ...STATUSES.map(s => [s,s])], ui.status);
+  fillSelect($("f-owner"), [["all","All owners"], ...owners.map(o => [o,o])], ui.owner);
+  $("f-hide").checked = ui.hide;
+  const shown = projs.filter(p => (ui.area === "all" || p.area === ui.area) && (ui.status === "all" || p.status === ui.status) && (ui.owner === "all" || p.owner === ui.owner) && !(ui.hide && isDone(p)));
+  if (!projs.length){ $("projectAreas").innerHTML = `<div class="list"><div class="empty">${loaded ? "No projects yet." : "Loading projects…"}</div></div>`; return; }
+  $("projectAreas").innerHTML = AREA_ORDER.map(k => {
+    const list = shown.filter(p => p.area === k);
+    if (!list.length) return "";
+    return `<div style="margin-top:18px"><div class="sec-head" style="--bc:${AREAS[k].color}"><h2>${esc(AREAS[k].label)}</h2><span class="count">${list.length}</span><span class="rule"></span></div>
+      <div class="list">${list.map(p => {
+        const sc = STATUS_COLOR[p.status] || "var(--muted)";
+        const dl = p.dueLabel || p.due || "";
+        const links = (p.links || []).map((u,i) => `<a href="${esc(u)}" target="_blank" rel="noopener">Doc ${i+1}</a>`).join(" · ");
+        return `<div class="row ${isDone(p) ? "done" : ""}" style="--bc:${AREAS[k].color}" data-id="${esc(p.id)}">
+          <button class="check" data-act="complete" aria-label="${isDone(p) ? "Reopen" : "Mark completed"}: ${esc(p.title)}" aria-pressed="${isDone(p)}">${CHECK}</button>
+          <div style="min-width:0"><div class="r-title">${esc(p.title)}</div>
+            ${p.next ? `<div class="next"><b>Next:</b> ${esc(p.next)}</div>` : ""}
+            ${p.blocker ? `<div class="next" style="color:var(--crit)"><b style="color:inherit">Waiting on:</b> ${esc(p.blocker)}</div>` : ""}
+            ${links ? `<div class="r-detail">${links}</div>` : ""}
+            <div class="r-meta">
+              <select class="status-sel" style="--sc:${sc}" data-act="status" id="s-${esc(p.id)}" aria-label="Status for ${esc(p.title)}">${STATUSES.map(s => `<option${s === p.status ? " selected" : ""}>${s}</option>`).join("")}</select>
+              ${p.sub ? `<span class="pill">${esc(p.sub)}</span>` : ""}${p.owner ? `<span class="pill">Owner: ${esc(p.owner)}</span>` : ""}
+              ${dl ? `<span class="pill due ${/overdue/i.test(dl) ? "over" : dueClass(p.due)}">Due ${esc(dl)}</span>` : ""}
+            </div></div>
+          <div class="r-side"><button class="icobtn" data-act="del" aria-label="Delete ${esc(p.title)}">${TRASH}</button></div></div>`;
+      }).join("")}</div></div>`;
+  }).join("") || `<div class="list"><div class="empty">Nothing matches these filters.</div></div>`;
+}
+
+function render(){ stats(); renderActions(); renderCalendar(); renderSandbox(); renderProjects(); }
+
+/* ---------- tabs ---------- */
+const VIEWS = ["actions","calendar","sandbox","projects"];
+function show(v){
+  if (!VIEWS.includes(v)) v = "actions";
+  ui.view = v;
+  VIEWS.forEach(x => { $("view-"+x).hidden = x !== v; $("tab-"+x).setAttribute("aria-selected", String(x === v)); });
+}
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => { show(t.dataset.view); if (location.hash !== "#"+t.dataset.view) history.replaceState(null, "", "#"+t.dataset.view); }));
+window.addEventListener("hashchange", () => show(location.hash.slice(1)));
+show(location.hash.slice(1));
+
+/* ---------- events ---------- */
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  const host = b.closest("[data-id]"); const id = host && host.dataset.id; const it = items.find(i => i.id === id);
+  if (b.dataset.act === "toggle" && it) patch(id, {done: !it.done});
+  else if (b.dataset.act === "complete" && it) patch(id, {status: isDone(it) ? (it.prevStatus || "In progress") : "Completed and verified", prevStatus: it.status});
+  else if (b.dataset.act === "del" && it){
+    if (b.dataset.armed){ remove(id); }
+    else { b.dataset.armed = "1"; b.style.color = "var(--crit)"; b.style.borderColor = "var(--crit)"; b.setAttribute("aria-label", "Tap again to delete"); b.title = "Tap again to delete"; setTimeout(() => { if (b.isConnected){ delete b.dataset.armed; b.style.color = ""; b.style.borderColor = ""; b.title = ""; } }, 3000); }
+  }
+});
+document.addEventListener("change", e => {
+  const el = e.target, host = el.closest("[data-id]"); const id = host && host.dataset.id;
+  if (el.dataset.act === "status" && id){ const it = items.find(i => i.id === id); patch(id, {status: el.value, prevStatus: it ? it.status : null}); }
+  if (el.dataset.act === "time" && id && /^\d{2}:\d{2}$/.test(el.value)) patch(id, {time: el.value});
+});
+$("areaChips").addEventListener("click", e => { const c = e.target.closest("[data-area]"); if (!c) return; ui.area = c.dataset.area; saveUi(); renderProjects(); });
+$("f-status").addEventListener("change", e => { ui.status = e.target.value; saveUi(); renderProjects(); });
+$("f-owner").addEventListener("change", e => { ui.owner = e.target.value; saveUi(); renderProjects(); });
+$("f-hide").addEventListener("change", e => { ui.hide = e.target.checked; saveUi(); renderProjects(); });
+
+fillSelect($("aa-group"), GROUPS.map(g => [g.id, g.label.split(" · ")[0] === "Tomorrow" ? "Friday Nov 6" : g.label.split(" · ")[0]]), "week");
+fillSelect($("ap-area"), AREA_ORDER.map(k => [k, AREAS[k].short]), "sns");
+function onAdd(formId, build){ $(formId).addEventListener("submit", e => { e.preventDefault(); const d = build(); if (d) create(d); }); }
+onAdd("addAction", () => { const t = $("aa-title").value.trim(); if (!t) return null; $("aa-title").value = ""; return {kind:"action", title:t, group:$("aa-group").value, owner:"Katerina", done:false, order:nextOrder("action")}; });
+onAdd("addCal", () => { const t = $("ac-title").value.trim(); if (!t || !parseDate($("ac-date").value)) return null; $("ac-title").value = ""; return {kind:"cal", title:t, date:$("ac-date").value, time:"09:00", dur:Number($("ac-dur").value)||30, done:false, order:nextOrder("cal")}; });
+onAdd("addSandbox", () => { const t = $("as-title").value.trim(); if (!t) return null; $("as-title").value = ""; return {kind:"cody", title:t, done:false, order:nextOrder("cody")}; });
+onAdd("addProject", () => { const t = $("ap-title").value.trim(); if (!t) return null; $("ap-title").value = ""; return {kind:"project", title:t, area:$("ap-area").value, owner:$("ap-owner").value.trim() || "Katerina", status:"Planned", order:nextOrder("project")}; });
+
+render();
+
+/* ---------- data ---------- */
+(async () => {
+  const db = window.claude && window.claude.use ? await window.claude.use("db") : null;
+  if (!db){ setSync("Open this page in Claude while signed in to see your list.", true); return; }
+  const user = await window.claude.use("user");
+  if (user && typeof user.can === "function"){ try { const w = await user.can("data.write"); if (w === false){ canWrite = false; document.body.classList.add("ro"); } } catch(e){} }
+  col = db.collection("board");
+  const timer = setTimeout(() => { if (!loaded) setSync("Can't reach your list yet. Showing what's cached.", true); }, 10000);
+  col.onSnapshot(snap => {
+    items = snap.docs.map(d => Object.assign({id: d.id}, d.data()));
+    if (!snap.metadata.fromCache){ loaded = true; clearTimeout(timer); }
+    if (snap.docs.length) loaded = true;
+    setSync(canWrite ? (snap.metadata.hasPendingWrites ? "Saving…" : "Saved") : "Read-only", false);
+    render();
+  }, err => { clearTimeout(timer); loaded = true; setSync(err && err.code === "revoked" ? "Access changed. Reload to continue." : "Lost connection to your list.", true); render(); });
+})();
+})();
+</script>
